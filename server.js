@@ -9,8 +9,6 @@ const globalErrorHandler = require("./middlewares/globalErrorHandler");
 const mountRoutes = require("./routes/index");
 const compression = require('compression')
 
-
-
 // config file
 dotenv.config({ path: "./config/config.env" });
 // db
