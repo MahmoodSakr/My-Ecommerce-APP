@@ -32,6 +32,8 @@ exports.signUp = asyncHandler(async (req, res, next) => {
 exports.login = asyncHandler(async (req, res, next) => {
   // Search for the user by his email
   const userObj = await User.findOne({ email: req.body.email });
+  // if email para value equals to any true value like "{'$gt':""}" >> it will work -- no sql query injection
+
   if (!userObj) {
     // return next(new Error("No user is founded with this email!"));
     return next(new ApiError("No user is founded with this email!", 401));
@@ -80,7 +82,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
   // 3- Ckeck if the id of the user in token payload is still existed as a user in the db or not
   /* Admin may delete the user in anytime and his token is still valid, 
   so dont let him access any routes with his correctly token */
-  
+
   const currentUser = await User.findById(decodedPayload.userId);
   console.log("currentUser ", currentUser);
 
@@ -93,10 +95,10 @@ exports.protect = asyncHandler(async (req, res, next) => {
   // 4- Ckeck if the user is deactived or not
   if (!currentUser.active) {
     res.status(401).json({
-      message: "This user account is not active, so the user is not authorized!",
+      message:
+        "This user account is not active, so the user is not authorized!",
     });
   }
-
 
   /* 5- Checks if the user has changed his password after his token has been inntialized (Security concern), 
    it must login again */

@@ -20,7 +20,7 @@ router.route("/:cartId").post(
 router.route("/checkout-session/:cartId").get(
   authController.protect, // to check whether the user is authenticated or not
   authController.isAllowedTo("user"), // to check whether the user is authorized or not
-  orderController.checkoutSession
+  orderController.createCheckoutSession
 );
 
 router.route("/").get(

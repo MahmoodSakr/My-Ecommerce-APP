@@ -73,10 +73,10 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     .json({ mess: "New order has been created successfully", data: order });
 });
 
-// @desc Create/get a new checkout session from stripe payment platform and return it as responce to the frontend developer to use it by the session public key to enable the payment process
+// @desc Create/get checkout session link from stripe payment platform and return it as responce to the frontend developer to use it by the session public key to enable the payment process
 // @route Get /orders/checkout-session/cartId
 // Access Private/User
-exports.checkoutSession = asyncHandler(async (req, res, next) => {
+exports.createCheckoutSession = asyncHandler(async (req, res, next) => {
   // get the cart based on its id
   let cart = await Cart.findById(req.params.cartId);
   if (!cart) {
@@ -118,7 +118,7 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
     cancel_url: `${req.protocol}://${req.get("host")}/carts`, // the url to be redirect if user click back and not complete payment to return to the last cart
     client_reference_id: req.params.cartId, // distinguish the session with id for any reference needed - We need the cartId to get its details when creating the order
     metadata: req.body.shippingAddress,
-    customer_email:req.user.email
+    customer_email: req.user.email,
   });
 
   // send the checkout session as a response to the client to use it in the payment process
@@ -127,49 +127,86 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
     url: session.url, // the url link of payment
     session,
   });
+});
 
-  //   // create an order with the default cash method
-  //   const newOrder = await Order.create({
-  //     user: req.user._id,
-  //     cartItems: cart.cartItems,
-  //     totalOrderPrice,
-  //     paymentMethod: "card",
-  //     shippingAddress: req.body.shippingAddress,
-  //   });
+const createOnlinePaymentOrder = async (sessionObj) => {
+  const cartId = sessionObj.client_reference_id;
+  const shippingAddress = sessionObj.metadata;
+  const orderPrice = sessionObj.amount_total / 100;
 
-  //   // increment the number of sold field and decrease the qunatity field in the Product model
-  //   cart.cartItems.forEach(async (itemObj) => {
-  //     let product = await Product.findByIdAndUpdate(itemObj.product, {
-  //       $inc: { quantity: -itemObj.quantity, sold: +itemObj.quantity },
-  //     });
-  //     if (!product) {
-  //       return res.status(404).json({
-  //         mess: "error in updating the product quantity and sold numbers",
-  //       });
-  //     }
-  //     console.log("updated product", product);
-  //   });
+  const cart = await Cart.findById(cartId);
+  const user = await Cart.findOne({ email: sessionObj.customer_email });
 
-  //   let order = await newOrder.save();
-  //   if (!order) {
-  //     return res.status(404).json({
-  //       mess:
-  //         "error in creating the order for the cart with id " + req.params.cartId,
-  //     });
-  //   }
+  // create an order with the online card method
+  const newOrder = await Order.create({
+    user: user._id,
+    cartItems: cart.cartItems,
+    shippingAddress,
+    totalOrderPrice: orderPrice,
+    paymentMethod: "card",
+    isPaid: true,
+    paidAt: Date.now(),
+  });
 
-  //   // remove the user cart
-  //   cart = await Cart.findByIdAndDelete(req.params.cartId);
-  //   if (!cart) {
-  //     return res.status(404).json({
-  //       mess: "error in deleting the cart with id " + req.params.cartId,
-  //     });
-  //   }
+  let order = await newOrder.save();
 
-  //   res
-  //     .status(201)
-  //     .json({ mess: "order has been created successfully", data: order });
-  //
+  if (!order) {
+    return res.status(404).json({
+      mess: "error in creating the order for the cart with id " + cartId,
+    });
+  }
+
+  // increment the number of sold field and decrease the qunatity field in the Product model
+  cart.cartItems.forEach(async (itemObj) => {
+    let product = await Product.findByIdAndUpdate(itemObj.product, {
+      $inc: { quantity: -itemObj.quantity, sold: +itemObj.quantity },
+    });
+    if (!product) {
+      return res.status(404).json({
+        mess: "error in updating the product quantity and sold numbers",
+      });
+    }
+    console.log("updated product", product);
+  });
+
+  // remove the user cart
+  let deletedCart = await Cart.findByIdAndDelete(cartId);
+  if (!deletedCart) {
+    return res.status(404).json({
+      mess: "error in deleting the cart with id " + cartId,
+    });
+  }
+  return order;
+};
+
+/* @desc This webhook route will be fetched by the Stripe payment gatemway 
+This used to listen to the checkout payment completed event from the payment gateway 
+to processed in creating the order */
+// @route Post /webhook-checkout
+// Access Private/User
+exports.webHookCheckout = asyncHandler(async (req, res, next) => {
+  // handle the incomming event from the Stripe payment gateway
+  const sig = req.headers["stripe-signature"];
+  let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    console.log("checkout.session.completed and lets create the order");
+    const sessionObj = event.data.object;
+    const order = createOnlinePaymentOrder(sessionObj);
+    res
+      .status(201)
+      .json({ mess: "New order has been created successfully", data: order });
+  } else {
+    console.log(`Unhandled event type ${event.type}`);
+    res.status(200).json({ mess: "online card order has not been done !" });
+  }
 });
 
 // @desc Get all Orders for all Users

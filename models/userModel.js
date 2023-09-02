@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, "User Password is required!"],
       minLength: [3, "Password must be between 3 and 30 characters"],
+      //   select: false,  if you want to prevent the password from being returned with the responce
     },
     passwordChangedAt: Date,
     passwordResetCode: String,
@@ -50,7 +51,7 @@ const UserSchema = new mongoose.Schema(
     ],
     addresses: [
       {
-        _id: {type: mongoose.Schema.Types.ObjectId} , // will be generated Automatically
+        _id: { type: mongoose.Schema.Types.ObjectId }, // will be generated Automatically
         alias: String,
         city: String,
         details: String,
@@ -73,8 +74,5 @@ UserSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 12); // 10 is the salt : the powerful of pass hashing
   next(); // go to the next middleware
 });
-
-
-
 
 module.exports = mongoose.model("User", UserSchema);
