@@ -188,10 +188,10 @@ creating/completing the order */
 // Access Private/User
 exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   // handle the incomming event from the Stripe payment gateway
+  console.log("--- Before Received event : ");
   const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
-  console.log("--- Before Received event : ");
 
   try {
     event = stripe.webhooks.constructEvent(
