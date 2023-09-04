@@ -3,6 +3,7 @@ const ApiError = require("../utils/ApiError");
 const Order = require("../models/orderModel");
 const Product = require("../models/productModel");
 const Cart = require("../models/cartModel");
+const User = require("../models/userModel");
 const Stripe = require("stripe");
 const stripe = Stripe();
 
@@ -136,7 +137,7 @@ const createOnlinePaymentOrder = async (sessionObj) => {
   const orderPrice = sessionObj.amount_total / 100;
 
   const cart = await Cart.findById(cartId);
-  const user = await Cart.findOne({ email: sessionObj.customer_email });
+  const user = await User.findOne({ email: sessionObj.customer_email });
 
   console.log("cart obj", cart);
   console.log("user obj", user);
