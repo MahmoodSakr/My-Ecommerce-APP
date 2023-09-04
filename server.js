@@ -61,7 +61,7 @@ app.use(hpp({ whitelist: ["price", "quantity", "sold"] }));
 mountRoutes(app);
 app.post(
   "/webhook-checkout",
-  express.raw({ type: "application/json" }),
+  // express.raw({ type: "application/json" }),
   webHookCheckout
 );
 
