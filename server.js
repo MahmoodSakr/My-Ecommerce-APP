@@ -55,10 +55,9 @@ app.use(limiter)
 // hpp middle ware protects against HTTP parameters pollution attack - Best practise #3
 app.use(hpp({whitelist:["price","quantity","sold"]})) 
 
-
-
 // Mount routes to their middlewares
 mountRoutes(app);
+
 
 // launch the server
 const port = process.env.port || 8000;

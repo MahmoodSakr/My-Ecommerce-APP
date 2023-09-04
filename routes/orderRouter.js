@@ -17,6 +17,8 @@ router.route("/:cartId").post(
   orderController.createCashOrder
 );
 
+router.route("/webhook-checkout").post(orderController.webHookCheckout)
+
 router.route("/checkout-session/:cartId").get(
   authController.protect, // to check whether the user is authenticated or not
   authController.isAllowedTo("user"), // to check whether the user is authorized or not
