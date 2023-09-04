@@ -57,7 +57,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
         mess: "error in updating the product quantity and sold numbers",
       });
     }
-    console.log("updated product", product);
+    console.log("Product has been updated and its details : ", product);
   });
 
   // remove the user cart
@@ -166,7 +166,7 @@ const createOnlinePaymentOrder = async (sessionObj) => {
         mess: "error in updating the product quantity and sold numbers",
       });
     }
-    console.log("updated product", product);
+    console.log("Product has been updated and its details : ", product);
   });
 
   // remove the user cart
@@ -180,25 +180,31 @@ const createOnlinePaymentOrder = async (sessionObj) => {
 };
 
 /* @desc This webhook route will be fetched by the Stripe payment gatemway 
-This used to listen to the checkout payment completed event from the payment gateway 
-to processed in creating the order */
-// @route Post /webhook-checkout
+Create webhook endpoint, so that Stripe payment can notify your integration when asynchronous events occur.
+This used to listen to the checkout payment completed event from the payment gateway to processed in 
+creating/completing the order */
+
+// @route Post /orders/webhook-checkout
 // Access Private/User
 exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   // handle the incomming event from the Stripe payment gateway
-  const sig = req.headers["stripe-signature"];
+  const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(
+      req.body,   // body contain the checkout session object which contain the user card id which will be used on creating the order
+      stripe_signature_header,
+      endpointSecret
+    );
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-
+  console.log("Received event : ", event.type);
   if (event.type === "checkout.session.completed") {
     console.log("checkout.session.completed and lets create the order");
-    const sessionObj = event.data.object;
+    const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
     const order = createOnlinePaymentOrder(sessionObj);
     res
       .status(201)

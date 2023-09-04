@@ -5,16 +5,13 @@ const cors = require("cors");
 const morgan = require("morgan");
 const dbConnection = require("./config/db");
 const mountRoutes = require("./routes/index");
-const compression = require("compression");
+const compression = require("compression"); 
 const rateLimit = require('express-rate-limit')
 const hpp = require('hpp')
 const mongoSanitize = require('express-mongo-sanitize');
 const { xss } = require('express-xss-sanitizer');
 
-
-
-
-// config file
+// config file path
 dotenv.config({ path: "./config/config.env" });
 // db
 dbConnection();
@@ -23,10 +20,11 @@ dbConnection();
 const app = express();
 
 // middleware
-app.use(cors()); // enable other domains to access your APIs
+app.use(cors()); // enable other domains/origins to access your APIs - check the responce header to see the differnce
 app.options("*", cors());
 app.use(express.json({limit:"70kb"})); // limit req body size - best practise #1
-app.use(compression()); // compress all responces
+app.use(compression()); // compress responce data size for enhancing performance - best practice #
+// you can test the responce data size with https://www.giftofspeed.com/gzip-test/
 app.use(express.static(path.join(__dirname, "upload")));
 app.use(express.urlencoded({ extended: false }));
 if (process.env.NODE_ENV === "development") {
