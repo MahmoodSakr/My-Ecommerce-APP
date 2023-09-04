@@ -5,11 +5,13 @@ const cors = require("cors");
 const morgan = require("morgan");
 const dbConnection = require("./config/db");
 const mountRoutes = require("./routes/index");
-const compression = require("compression"); 
-const rateLimit = require('express-rate-limit')
-const hpp = require('hpp')
-const mongoSanitize = require('express-mongo-sanitize');
-const { xss } = require('express-xss-sanitizer');
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
+const hpp = require("hpp");
+const mongoSanitize = require("express-mongo-sanitize");
+const { xss } = require("express-xss-sanitizer");
+
+const { webHookCheckout } = require("./controllers/orderController");
 
 // config file path
 dotenv.config({ path: "./config/config.env" });
@@ -22,7 +24,7 @@ const app = express();
 // middleware
 app.use(cors()); // enable other domains/origins to access your APIs - check the responce header to see the differnce
 app.options("*", cors());
-app.use(express.json({limit:"70kb"})); // limit req body size - best practise #1
+app.use(express.json({ limit: "70kb" })); // limit req body size - best practise #1
 app.use(compression()); // compress responce data size for enhancing performance - best practice #
 // you can test the responce data size with https://www.giftofspeed.com/gzip-test/
 app.use(express.static(path.join(__dirname, "upload")));
@@ -32,32 +34,36 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // middleware used to sanitizes user-incoming data to prevent MongoDB Operator Injection - Best practise #3
-// by remove $ and . operators from being injected into body,query,params,headers data 
-app.use(mongoSanitize()) 
+// by remove $ and . operators from being injected into body,query,params,headers data
+app.use(mongoSanitize());
 
 // middleware used to sanitizes user-incoming data with req to prevent cross site scripting - Best practise #3
-// prevent any <script>code</script> data from being injected into body,query,params,headers data by replace 
+// prevent any <script>code</script> data from being injected into body,query,params,headers data by replace
 // the <script> with any other chars.
-app.use(xss()) 
+app.use(xss());
 
 // Apply rate limit on repeated http req and return 429 status code with provided message
 // Protect against brute-foce attacks by rate the limit requests - Best practise #2
 const limiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  message:'Too many request from this IP, please try again after 15 min',
-})
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  message: "Too many request from this IP, please try again after 15 min",
+});
 
 // Apply the rate limiting middleware to all requests
-app.use(limiter)
+app.use(limiter);
 // app.use('route',limiter) // protect specific route by limiting req rate
 
 // hpp middle ware protects against HTTP parameters pollution attack - Best practise #3
-app.use(hpp({whitelist:["price","quantity","sold"]})) 
+app.use(hpp({ whitelist: ["price", "quantity", "sold"] }));
 
 // Mount routes to their middlewares
 mountRoutes(app);
-
+app.post(
+  "/webhook-checkout",
+  express.raw({ type: "application/json" }),
+  webHookCheckout
+);
 
 // launch the server
 const port = process.env.port || 8000;
