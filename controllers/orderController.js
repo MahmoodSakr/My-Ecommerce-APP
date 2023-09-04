@@ -208,9 +208,11 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   console.log("---  Received in event : ", event.type);
   if (event.type == "checkout.session.completed") {
     console.log("checkout.session.completed and lets create the order");
-    console.log("sessionObj is ",sessionObj);
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
+    console.log("sessionObj is ",sessionObj);
     const order = createOnlinePaymentOrder(sessionObj);
+    console.log("order is ",order);
+
     res
       .status(201)
       .json({ mess: "New order has been created successfully", data: order });
