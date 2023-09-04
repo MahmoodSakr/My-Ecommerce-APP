@@ -138,6 +138,9 @@ const createOnlinePaymentOrder = async (sessionObj) => {
   const cart = await Cart.findById(cartId);
   const user = await Cart.findOne({ email: sessionObj.customer_email });
 
+  console.log("cart obj", cart);
+  console.log("user obj", user);
+
   // create an order with the online card method
   const newOrder = await Order.create({
     user: user._id,
@@ -156,7 +159,7 @@ const createOnlinePaymentOrder = async (sessionObj) => {
       mess: "error in creating the order for the cart with id " + cartId,
     });
   }
-
+  console.log("order ", order);
   // increment the number of sold field and decrease the qunatity field in the Product model
   cart.cartItems.forEach(async (itemObj) => {
     let product = await Product.findByIdAndUpdate(itemObj.product, {
@@ -205,13 +208,12 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     console.log("error : ", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-  console.log("---  Received in event : ", event.type);
   if (event.type == "checkout.session.completed") {
     console.log("checkout.session.completed and lets create the order");
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
-    console.log("sessionObj is ",sessionObj);
+    console.log("sessionObj is ", sessionObj);
     const order = createOnlinePaymentOrder(sessionObj);
-    console.log("order is ",order);
+    console.log("order is ", order);
 
     res
       .status(201)
