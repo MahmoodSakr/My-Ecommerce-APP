@@ -192,8 +192,9 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
-
+  
   try {
+    console.log("--- Req.body : ", req.body);
     event = stripe.webhooks.constructEvent(
       req.body, // body contain the checkout session object which contain the user card id which will be used on creating the order
       stripe_signature_header,
