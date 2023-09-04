@@ -41,8 +41,6 @@ app.use(mongoSanitize());
 // the <script> with any other chars.
 app.use(xss());
 
-app.enable('trust proxy');
-
 // Apply rate limit on repeated http req and return 429 status code with provided message
 // Protect against brute-foce attacks by rate the limit requests - Best practise #2
 const limiter = rateLimit({
