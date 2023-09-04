@@ -191,7 +191,7 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
-  console.log("--- Before Received event : ", event.type);
+  console.log("--- Before Received event : ");
 
   try {
     event = stripe.webhooks.constructEvent(
