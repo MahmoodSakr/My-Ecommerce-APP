@@ -24,7 +24,6 @@ const app = express();
 // middleware
 app.use(cors()); // enable other domains/origins to access your APIs - check the responce header to see the differnce
 app.options("*", cors());
-app.use(express.json({ limit: "70kb" })); // limit req body size - best practise #1
 app.use(compression()); // compress responce data size for enhancing performance - best practice #
 // you can test the responce data size with https://www.giftofspeed.com/gzip-test/
 app.use(express.static(path.join(__dirname, "upload")));
@@ -58,13 +57,14 @@ app.use(limiter);
 app.use(hpp({ whitelist: ["price", "quantity", "sold"] }));
 
 // Mount routes to their middlewares
-mountRoutes(app);
 app.post(
   "/webhook-checkout",
   express.raw({ type: 'application/json' }),
   webHookCheckout
-);
+  );
+  app.use(express.json({ limit: "70kb" })); // limit req body size - best practise #1
 
+  mountRoutes(app);
 // launch the server
 const port = process.env.port || 8000;
 const server = app.listen(port, () => {
