@@ -191,17 +191,18 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
+  console.log("--- Before Received event : ", event.type);
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,   // body contain the checkout session object which contain the user card id which will be used on creating the order
+      req.body, // body contain the checkout session object which contain the user card id which will be used on creating the order
       stripe_signature_header,
       endpointSecret
     );
+    console.log("---  Received event : ", event.type);
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-  console.log("Received event : ", event.type);
   if (event.type === "checkout.session.completed") {
     console.log("checkout.session.completed and lets create the order");
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
