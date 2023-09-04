@@ -153,14 +153,14 @@ const createOnlinePaymentOrder = async (sessionObj) => {
     paidAt: Date.now(),
   });
 
-  let order = await newOrder.save();
+  const order = await newOrder.save();
 
   if (!order) {
     return res.status(404).json({
       mess: "error in creating the order for the cart with id " + cartId,
     });
   }
-  console.log("order ", order);
+  console.log("order obj", order);
   // increment the number of sold field and decrease the qunatity field in the Product model
   cart.cartItems.forEach(async (itemObj) => {
     let product = await Product.findByIdAndUpdate(itemObj.product, {
@@ -176,11 +176,13 @@ const createOnlinePaymentOrder = async (sessionObj) => {
 
   // remove the user cart
   let deletedCart = await Cart.findByIdAndDelete(cartId);
+  console.log("deletedCart ", deletedCart);
   if (!deletedCart) {
     return res.status(404).json({
       mess: "error in deleting the cart with id " + cartId,
     });
   }
+  console.log("order retuned 1 is ", order);
   return order;
 };
 
@@ -214,8 +216,7 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
     console.log("sessionObj is ", sessionObj);
     const order = createOnlinePaymentOrder(sessionObj);
-    console.log("order is ", order);
-
+    console.log("order retuned 2 is ", order);
     res
       .status(201)
       .json({ mess: "New order has been created successfully", data: order });
