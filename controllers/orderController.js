@@ -199,7 +199,7 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
       stripe_signature_header,
       endpointSecret
     );
-    console.log("---  Received event : ", event.type);
+    console.log("---  Received in event : ", event.type);
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }

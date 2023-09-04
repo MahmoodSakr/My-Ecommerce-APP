@@ -62,7 +62,6 @@ mountRoutes(app);
 app.post(
   "/webhook-checkout",
   express.raw({ type: "application/json" }),
-  ()=>{console.log('hello in webhook');},
   webHookCheckout
 );
 
