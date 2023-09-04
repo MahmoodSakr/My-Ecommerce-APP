@@ -130,6 +130,7 @@ exports.createCheckoutSession = asyncHandler(async (req, res, next) => {
 });
 
 const createOnlinePaymentOrder = async (sessionObj) => {
+  console.log("inside createOnlinePaymentOrder , sessionObj ", sessionObj);
   const cartId = sessionObj.client_reference_id;
   const shippingAddress = sessionObj.metadata;
   const orderPrice = sessionObj.amount_total / 100;
@@ -192,7 +193,7 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
-  
+
   try {
     console.log("--- Req.body : ", req.body);
     event = stripe.webhooks.constructEvent(
@@ -201,13 +202,13 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
       endpointSecret
     );
   } catch (err) {
-    console.log("error : ",err.message)
+    console.log("error : ", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   console.log("---  Received in event : ", event.type);
-  console.log("---  client_reference_id : ", event.data.object.client_reference_id);
   if (event.type === "checkout.session.completed") {
     console.log("checkout.session.completed and lets create the order");
+    console.log("sessionObj is ",sessionObj);
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
     const order = createOnlinePaymentOrder(sessionObj);
     res
