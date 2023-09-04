@@ -25,6 +25,17 @@ const app = express();
 app.use(cors()); // enable other domains/origins to access your APIs - check the responce header to see the differnce
 app.options("*", cors());
 
+
+
+
+app.use(compression()); // compress responce data size for enhancing performance - best practice #
+// you can test the responce data size with https://www.giftofspeed.com/gzip-test/
+app.use(express.static(path.join(__dirname, "upload")));
+app.use(express.urlencoded({ extended: false }));
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
 // Mount routes to their middlewares
 mountRoutes(app);
 app.post(
@@ -33,15 +44,7 @@ app.post(
   webHookCheckout
 );
 
-
 app.use(express.json({ limit: "70kb" })); // limit req body size - best practise #1
-app.use(compression()); // compress responce data size for enhancing performance - best practice #
-// you can test the responce data size with https://www.giftofspeed.com/gzip-test/
-app.use(express.static(path.join(__dirname, "upload")));
-app.use(express.urlencoded({ extended: false }));
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
 
 // middleware used to sanitizes user-incoming data to prevent MongoDB Operator Injection - Best practise #3
 // by remove $ and . operators from being injected into body,query,params,headers data
