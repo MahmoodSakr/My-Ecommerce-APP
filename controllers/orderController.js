@@ -210,7 +210,7 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   if (event.type == "checkout.session.completed") {
-    console.log("checkout.session.completed and lets to create the order");
+    console.log("User has paid via the Stripe gateway and lets to create the order");
     /* this obj has the event req body send from the stripe to this webhook api and contain details about the 
     checkout session like the client_ref_id which is equals to the card id to be used on creating the order */
     const sessionObj =  event.data.object; 
