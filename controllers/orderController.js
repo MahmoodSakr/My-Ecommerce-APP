@@ -126,7 +126,7 @@ exports.createCheckoutSession = asyncHandler(async (req, res, next) => {
   // send the checkout session as a response to the client to use it in the payment process
   res.status(200).json({
     mess: "Checkout payment session is created successfully",
-    url: session.url, // the url link of payment
+  //  url: session.url, // the url link of payment
     session,
   });
 });
