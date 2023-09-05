@@ -126,7 +126,7 @@ exports.createCheckoutSession = asyncHandler(async (req, res, next) => {
   // send the checkout session as a response to the client to use it in the payment process
   res.status(200).json({
     mess: "Checkout payment session is created successfully",
-  //  url: session.url, // the url link of payment
+    //  url: session.url, // the url link of payment
     session,
   });
 });
@@ -157,7 +157,7 @@ const createOnlinePaymentOrder = async (sessionObj) => {
       mess: "error in creating the order for the cart with id " + cartId,
     });
   }
-  console.log("The order has been created", order);
+  console.log("The order has been created successfully", order);
 
   // After the order is created, increment the number of sold field and decrease the qunatity field in the Product model
   cart.cartItems.forEach(async (itemObj) => {
@@ -169,15 +169,15 @@ const createOnlinePaymentOrder = async (sessionObj) => {
         mess: "error in updating the product quantity and sold numbers",
       });
     }
-    console.log("Product has been updated.");
+    console.log("Product details has been updated after the order creation.");
   });
 
   // remove the user cart after creating the order
   let deletedCart = await Cart.findByIdAndDelete(cartId);
   if (!deletedCart) {
-    return res.status(404).json({
-      mess: `error in deleting the cart with id ${cartId} after the order has been created`,
-    });
+    console.log(
+      `error in deleting the cart with id ${cartId} after the order has been created`
+    );
   }
   console.log(
     `The Cart with id ${cartId} has been removed after the order and its details ${deletedCart}`
@@ -223,7 +223,9 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     console.log(`Unhandled event type ${event.type}`);
     res
       .status(200)
-      .json({ mess: `Unhandled event type has triggered from stripe platform ${event.type}` });
+      .json({
+        mess: `Unhandled event type has triggered from stripe platform ${event.type}`,
+      });
   }
 });
 
