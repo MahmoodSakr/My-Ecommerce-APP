@@ -145,7 +145,7 @@ const createOnlinePaymentOrder = async (sessionObj) => {
     cartItems: cart.cartItems,
     shippingAddress,
     totalOrderPrice: orderPrice,
-    paymentMethod: "Card",
+    paymentMethod: "card",
     isPaid: true,
     paidAt: Date.now(),
   });
@@ -212,11 +212,10 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     console.log("checkout.session.completed and lets to create the order");
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
     console.log("sessionObj is ", sessionObj);
-    console.log("req.body is ", req.body);
     // create the order based on the cart details on the sessionObj
     const order = createOnlinePaymentOrder(sessionObj);
     console.log("order retuned 2 is ", order);
-    // this responce will reply to the Stripe payment not on your front-end, so trace them in your webhook dashborad on your stripe profile
+    // Responce to the Stripe payment not to your front-end, so trace them in your stripe webhook dashborad profile
     res
       .status(201)
       .json({ mess: "New order has been created successfully", data: order });
