@@ -218,7 +218,7 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     // Responce to the Stripe payment not to your front-end, so trace them in your stripe webhook dashborad profile
     res
       .status(201)
-      .json({ mess: "New order has been created successfully", data: order });
+      .json({ mess: `New order with id ${order._id} has been created successfully`, data: order });
   } else {
     console.log(`Unhandled event type ${event.type}`);
     res
