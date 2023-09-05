@@ -222,7 +222,8 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     res
       .status(201)
       .json({
-        mess: `New order with id ${order._id} has been created successfully`,
+        mess: `New order with id ${order.id} has been created successfully`,
+        mess2: `New order with id ${order._id} has been created successfully`,
         data: order,
       });
   } else {
