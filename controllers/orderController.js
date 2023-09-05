@@ -74,7 +74,8 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     .json({ mess: "New order has been created successfully", data: order });
 });
 
-// @desc Create/get checkout session link from stripe payment platform and return it as responce to the frontend developer to use it by the session public key to enable the payment process
+/* @desc Create/get checkout session link from stripe payment platform based on Cart Id and return it as responce 
+ to the frontend developer to use it by the session public key to enable the payment process */
 // @route Get /orders/checkout-session/cartId
 // Access Private/User
 exports.createCheckoutSession = asyncHandler(async (req, res, next) => {
@@ -124,14 +125,13 @@ exports.createCheckoutSession = asyncHandler(async (req, res, next) => {
 
   // send the checkout session as a response to the client to use it in the payment process
   res.status(200).json({
-    mess: "session is created successfully",
+    mess: "Checkout payment session is created successfully",
     url: session.url, // the url link of payment
     session,
   });
 });
 
 const createOnlinePaymentOrder = async (sessionObj) => {
-  console.log("inside createOnlinePaymentOrder , sessionObj ", sessionObj);
   const cartId = sessionObj.client_reference_id;
   const shippingAddress = sessionObj.metadata;
   const orderPrice = sessionObj.amount_total / 100;
@@ -139,16 +139,13 @@ const createOnlinePaymentOrder = async (sessionObj) => {
   const cart = await Cart.findById(cartId);
   const user = await User.findOne({ email: sessionObj.customer_email });
 
-  console.log("cart obj", cart);
-  console.log("user obj", user);
-
   // create an order with the online card method
   const newOrder = await Order.create({
     user: user._id,
     cartItems: cart.cartItems,
     shippingAddress,
     totalOrderPrice: orderPrice,
-    paymentMethod: "card",
+    paymentMethod: "Card",
     isPaid: true,
     paidAt: Date.now(),
   });
@@ -160,8 +157,9 @@ const createOnlinePaymentOrder = async (sessionObj) => {
       mess: "error in creating the order for the cart with id " + cartId,
     });
   }
-  console.log("order obj", order);
-  // increment the number of sold field and decrease the qunatity field in the Product model
+  console.log("The order has been created", order);
+
+  // After the order is created, increment the number of sold field and decrease the qunatity field in the Product model
   cart.cartItems.forEach(async (itemObj) => {
     let product = await Product.findByIdAndUpdate(itemObj.product, {
       $inc: { quantity: -itemObj.quantity, sold: +itemObj.quantity },
@@ -174,19 +172,20 @@ const createOnlinePaymentOrder = async (sessionObj) => {
     console.log("Product has been updated and its details : ", product);
   });
 
-  // remove the user cart
+  // remove the user cart after creating the order
   let deletedCart = await Cart.findByIdAndDelete(cartId);
-  console.log("deletedCart ", deletedCart);
   if (!deletedCart) {
     return res.status(404).json({
-      mess: "error in deleting the cart with id " + cartId,
+      mess: `error in deleting the cart with id ${cartId} after the order has been created`,
     });
   }
-  console.log("order retuned 1 is ", order);
+  console.log(
+    `The Cart with id ${cartId} has been removed after the order and its details ${deletedCart}`
+  );
   return order;
 };
 
-/* @desc This webhook route will be fetched by the Stripe payment gatemway 
+/* @desc This webhook route will be fetched by the Stripe payment gatemway and the responce will return to them not to the frontend
 Create webhook endpoint, so that Stripe payment can notify your integration when asynchronous events occur.
 This used to listen to the checkout payment completed event from the payment gateway to processed in 
 creating/completing the order */
@@ -194,16 +193,14 @@ creating/completing the order */
 // @route Post /orders/webhook-checkout
 // Access Private/User
 exports.webHookCheckout = asyncHandler(async (req, res, next) => {
-  // handle the incomming event from the Stripe payment gateway
-  console.log("--- Before Received event : ");
+  // handle the incomming event from the Stripe gateway after the payment has been done with its two cases (success / fail)
   const stripe_signature_header = req.headers["stripe-signature"];
   let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  let event;
+  let event; // construct the incomming event
 
   try {
-    console.log("--- Req.body : ", req.body);
     event = stripe.webhooks.constructEvent(
-      req.body, // body contain the checkout session object which contain the user card id which will be used on creating the order
+      req.body, // body obj contains the checkout payment session object which contain the card id which will be used on creating the order
       stripe_signature_header,
       endpointSecret
     );
@@ -212,17 +209,22 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   if (event.type == "checkout.session.completed") {
-    console.log("checkout.session.completed and lets create the order");
+    console.log("checkout.session.completed and lets to create the order");
     const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
     console.log("sessionObj is ", sessionObj);
+    console.log("req.body is ", req.body);
+    // create the order based on the cart details on the sessionObj
     const order = createOnlinePaymentOrder(sessionObj);
     console.log("order retuned 2 is ", order);
+    // this responce will reply to the Stripe payment not on your front-end, so trace them in your webhook dashborad on your stripe profile
     res
       .status(201)
       .json({ mess: "New order has been created successfully", data: order });
   } else {
     console.log(`Unhandled event type ${event.type}`);
-    res.status(200).json({ mess: "online card order has not been done !" });
+    res
+      .status(200)
+      .json({ mess: `Unhandled event type has triggered from stripe platform ${event.type}` });
   }
 });
 
