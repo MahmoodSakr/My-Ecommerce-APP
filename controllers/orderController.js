@@ -157,7 +157,8 @@ const createOnlinePaymentOrder = async (sessionObj) => {
       mess: "error in creating the order for the cart with id " + cartId,
     });
   }
-  console.log("The order has been created successfully", order);
+  console.log(`The order with id ${order.id} has been created successfully`, order);
+  console.log(`*The order with id ${order._id} has been created successfully`, order);
 
   // After the order is created, increment the number of sold field and decrease the qunatity field in the Product model
   cart.cartItems.forEach(async (itemObj) => {
