@@ -169,7 +169,7 @@ const createOnlinePaymentOrder = async (sessionObj) => {
         mess: "error in updating the product quantity and sold numbers",
       });
     }
-    console.log("Product has been updated and its details : ", product);
+    console.log("Product has been updated.");
   });
 
   // remove the user cart after creating the order
