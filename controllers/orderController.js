@@ -217,13 +217,11 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     console.log("sessionObj is ", sessionObj);
     // create the order based on the cart details on the sessionObj
     const order = createOnlinePaymentOrder(sessionObj);
-    console.log("order retuned 2 is ", order);
     // Responce to the Stripe payment not to your front-end, so trace them in your stripe webhook dashborad profile
     res
       .status(201)
       .json({
-        mess: `New order with id ${order.id} has been created successfully`,
-        mess2: `New order with id ${order._id} has been created successfully`,
+        mess: `Webhook event received and a new order has been created successfully`,
         data: order,
       });
   } else {
