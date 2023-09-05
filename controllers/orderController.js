@@ -210,7 +210,9 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
   }
   if (event.type == "checkout.session.completed") {
     console.log("checkout.session.completed and lets to create the order");
-    const sessionObj = event.data.object; //this obj checkout session object which contain the user card id which will be used on creating the order
+    /* this obj has the event req body send from the stripe to this webhook api and contain details about the 
+    checkout session like the client_ref_id which is equals to the card id to be used on creating the order */
+    const sessionObj =  event.data.object; 
     console.log("sessionObj is ", sessionObj);
     // create the order based on the cart details on the sessionObj
     const order = createOnlinePaymentOrder(sessionObj);
@@ -218,14 +220,15 @@ exports.webHookCheckout = asyncHandler(async (req, res, next) => {
     // Responce to the Stripe payment not to your front-end, so trace them in your stripe webhook dashborad profile
     res
       .status(201)
-      .json({ mess: `New order with id ${order._id} has been created successfully`, data: order });
+      .json({
+        mess: `New order with id ${order._id} has been created successfully`,
+        data: order,
+      });
   } else {
     console.log(`Unhandled event type ${event.type}`);
-    res
-      .status(200)
-      .json({
-        mess: `Unhandled event type has triggered from stripe platform ${event.type}`,
-      });
+    res.status(200).json({
+      mess: `Unhandled event type has triggered from stripe platform ${event.type}`,
+    });
   }
 });
 
